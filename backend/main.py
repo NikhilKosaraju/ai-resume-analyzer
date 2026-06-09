@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pypdf import PdfReader
 import tempfile
 import re
+import os
 
 app = FastAPI()
 
@@ -17,15 +18,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.get("/")
 def home():
     return {"message": "Backend Running Successfully"}
 
 
 def analyze_resume(text):
-
     text = text.lower()
-    text = re.sub(r'[^a-z0-9.+# ]', ' ', text)
+    text = re.sub(r"[^a-z0-9.+# ]", " ", text)
 
     skills = []
 
@@ -54,7 +55,7 @@ def analyze_resume(text):
     suggestions = []
 
     if "github" not in text:
-        suggestions.append("Add GitHub profile")
+        suggestions.append("Add GitHub Profile")
 
     if "aws" not in text:
         suggestions.append("Learn AWS")
@@ -63,7 +64,7 @@ def analyze_resume(text):
         suggestions.append("Learn Docker")
 
     if len(skills) < 6:
-        suggestions.append("Add more technical skills")
+        suggestions.append("Add More Technical Skills")
 
     return {
         "score": score,
@@ -74,26 +75,44 @@ def analyze_resume(text):
 
 @app.post("/upload")
 async def upload_resume(file: UploadFile = File(...)):
+    try:
+        content = await file.read()
 
-    content = await file.read()
+        if not content:
+            return {"error": "Uploaded file is empty"}
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
-        temp_file.write(content)
-        temp_file.flush()
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".pdf"
+        ) as temp_file:
 
-        reader = PdfReader(temp_file.name)
+            temp_file.write(content)
+            temp_file.flush()
+
+            pdf_path = temp_file.name
+
+        reader = PdfReader(pdf_path)
 
         text = ""
 
         for page in reader.pages:
-            extracted = page.extract_text()
-            if extracted:
-                text += extracted + "\n"
+            page_text = page.extract_text()
 
-    analysis = analyze_resume(text)
+            if page_text:
+                text += page_text + "\n"
 
-    return {
-        "filename": file.filename,
-        "text": text[:5000],
-        "analysis": analysis
-    }
+        os.remove(pdf_path)
+
+        analysis = analyze_resume(text)
+
+        return {
+            "filename": file.filename,
+            "text": text[:5000],
+            "analysis": analysis
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e)
+        }
+        
