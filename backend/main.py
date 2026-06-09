@@ -75,13 +75,11 @@ def analyze_resume(text):
 @app.post("/upload")
 async def upload_resume(file: UploadFile = File(...)):
 
-    with tempfile.NamedTemporaryFile(
-        delete=False,
-        suffix=".pdf"
-    ) as temp_file:
+    content = await file.read()
 
-        content = await file.read()
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_file:
         temp_file.write(content)
+        temp_file.flush()
 
         reader = PdfReader(temp_file.name)
 
@@ -91,8 +89,6 @@ async def upload_resume(file: UploadFile = File(...)):
             extracted = page.extract_text()
             if extracted:
                 text += extracted + "\n"
-
-    print(text.lower())
 
     analysis = analyze_resume(text)
 
