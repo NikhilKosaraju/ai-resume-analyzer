@@ -26,6 +26,17 @@ def home():
 
 def analyze_resume(text):
     text = text.lower()
+
+# Fix spaced letters from PDF extraction
+text = text.replace("r e a c t", "react")
+text = text.replace("p y t h o n", "python")
+text = text.replace("f i r e b a s e", "firebase")
+text = text.replace("m o n g o d b", "mongodb")
+text = text.replace("j a v a", "java")
+text = text.replace("h t m l", "html")
+text = text.replace("c s s", "css")
+text = text.replace("s q l", "sql")
+text = text.replace("f i g m a", "figma")
     text = re.sub(r"[^a-z0-9.+# ]", " ", text)
 
     skills = []
@@ -115,4 +126,3 @@ async def upload_resume(file: UploadFile = File(...)):
         return {
             "error": str(e)
         }
-        
