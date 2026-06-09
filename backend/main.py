@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 import tempfile
 import re
 
